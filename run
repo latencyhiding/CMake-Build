@@ -1,0 +1,11 @@
+# Convenience script to run the unix version of the program
+# Usage: run <name>
+
+NAME=$1
+FILENAME=$(basename ${NAME})
+
+if [ -f "bin/unix/${NAME}" ]; then
+     	"bin/unix/${NAME}"
+else
+	echo "Executable not found"
+fi

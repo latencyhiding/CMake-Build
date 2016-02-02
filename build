@@ -1,0 +1,89 @@
+pushd () {
+    command pushd "$@" > /dev/null
+}
+
+popd () {
+    command popd "$@" > /dev/null
+}
+
+printline() {
+    printf '%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' -
+}
+
+BLUE='\e[34m'
+NC='\e[39m'
+ARGS=$@
+MAKE_FLAGS=()
+
+BUILD_TYPE="Debug"
+UNIT_TESTS=false
+CLEAN=false
+CALLED_FROM_UNIT_TEST=false
+
+NAME=$(basename ${PWD})
+BUILD_DIR="${PWD}/bin"
+
+declare -A TOOLCHAIN_FILES
+
+TOOLCHAIN_FILES=(
+	["unix"]=""
+	["win32"]="'/home/mxe/usr/i686-w64-mingw32.static/share/cmake/mxe-conf.cmake'"
+	["win64"]="'/home/mxe/usr/x86_64-w64-mingw32.static/share/cmake/mxe-conf.cmake'"
+)
+
+if [ "$ARGS" == "" ]; then
+   PLATFORM=(unix)
+fi
+
+while test $# -gt 0
+do
+    case "$1" in
+        --debug) BUILD_TYPE="Debug"
+            ;;
+        --release) BUILD_TYPE="Release"
+	    ;;
+	--ut) UNIT_TESTS=true
+	    ;;
+	--win32) PLATFORM+=(win32)
+ 	    ;;
+	--win64) PLATFORM+=(win64)
+ 	    ;;
+	--unix) PLATFORM+=(unix)
+	    ;;
+	--all) PLATFORM=(unix win32 win64)
+	    ;;     
+        --*) echo -e "bad option $1"
+            ;;
+	*) echo -e "Make option $1"
+	    MAKE_FLAGS+=$1
+	    ;;
+    esac
+    shift
+done
+
+printline
+
+echo -e "Building ${BLUE}${BUILD_TYPE}${NC} for ${PLATFORM}"
+
+for i in "${PLATFORM[@]}"
+do
+	echo -e "Building ${BLUE}$i${NC}"
+	PLAT_BUILD_DIR="${BUILD_DIR}/$i/${CMAKE_UNIT_TEST_DEF}"
+	mkdir -p ${PLAT_BUILD_DIR}
+	pushd ${PLAT_BUILD_DIR}
+	   echo ${TOOLCHAIN_FILES["${i}"]}
+	   cmake ${TOOLCHAIN_FILES["${i}"]} ../../
+	   echo -e "${BLUE}${i} build:${NC}"
+	   make ${MAKE_FLAGS}
+	popd
+	printline
+done
+
+if [ "$UNIT_TESTS" = true ] && [ "${BUILD_DIR}" != "" ]; then
+   echo -e "${BLUE}Building unit tests${NC}"
+   for d in unit_tests/*/ ; do
+         pushd $d
+	       ./build ${MAKE_FLAGS}
+	 popd
+   done
+fi

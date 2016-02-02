@@ -1,0 +1,48 @@
+# Short script for creating a binary directory, a platform directory, and running cmake/make from
+# within those.
+#
+# Usage: plat_build --PLATFORM=<platform> --BUILD_DIR=<builddir> --BUILD_UNIT_TESTS=<true/false> --TOOLCHAIN_FILE=<toolchain> <make flags>
+#
+# Params:
+# PLATFORM: the platform name
+# TOOLCHAIN_FILE: CMake toolchain file for the specified platform
+# BUILD_DIR: root directory of all platform builds, eg bin or lib
+# BUILD_UNIT_TESTS: whether or not to build unit tests
+
+BLUE="\e[34m"
+NC="\e[39m"
+
+usage() { echo "Usage: plat_build [ -p <platform> ] [ -b <build directory> ] [ -u (toggle building unit tests) ] [ -t <toolchain file> ]"; exit 1; }
+
+while getopts ":p:b:u:t:" o; do
+    case "${o}" in
+        p)
+            PLATFORM=${OPTARG}
+            ;;
+	b)
+	    BUILD_DIR=${OPTARG}
+	    ;;
+	u)
+	    BUILD_UNIT_TESTS=true
+	    ;;
+	t)
+	    TOOLCHAIN_FILE=${OPTARG}
+	    ;;		
+        *)
+            usage
+            ;;
+    esac
+done
+shift $((OPTIND-1))
+
+echo -e "Building ${BLUE}${PLATFORM}${NC}"
+PROJ_DIR="${BUILD_DIR}/${PLATFORM}"
+mkdir -p ${PROJ_DIR}
+pushd "${PROJ_DIR}" > /dev/null
+   if [ "${BUILD_UNIT_TESTS}" == "true" ]; then
+      mkdir -p unit_tests
+   fi
+   cmake -DCMAKE_TOOLCHAIN_FILE=${TOOLCHAIN_FILE} -DBUILD_UNIT_TESTS="${BUILD_UNIT_TESTS}" ../../
+   echo -e "${BLUE}${PLATFORM} build:${NC}"
+   make ${MAKE_FLAGS}
+popd > /dev/null
