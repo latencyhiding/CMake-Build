@@ -35,6 +35,10 @@ while getopts ":p:b:u:t:" o; do
 done
 shift $((OPTIND-1))
 
+if [ "${BUILD_DIR}" == "" ]; then
+   BUILD_DIR="bin"
+fi
+
 echo -e "Building ${BLUE}${PLATFORM}${NC}"
 PROJ_DIR="${BUILD_DIR}/${PLATFORM}"
 mkdir -p ${PROJ_DIR}

@@ -1,0 +1,2 @@
+CMAKE_WIN_X86_64_TOOLCHAIN_FILE='/home/mxe/usr/x86_64-w64-mingw32.static/share/cmake/mxe-conf.cmake'
+CMAKE_WIN_I686_TOOLCHAIN_FILE='/home/mxe/usr/i686-w64-mingw32.static/share/cmake/mxe-conf.cmake'
